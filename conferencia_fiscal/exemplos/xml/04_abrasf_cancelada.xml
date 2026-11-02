@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<CompNfse xmlns="http://www.abrasf.org.br/ABRASF/arquivos/nfse.xsd">
+  <Nfse>
+    <InfNfse>
+      <Numero>577</Numero>
+      <CodigoVerificacao>ZX9-118</CodigoVerificacao>
+      <DataEmissao>2026-10-21T08:00:00</DataEmissao>
+      <Servico>
+        <Valores>
+          <ValorServicos>3126.40</ValorServicos>
+          <IssRetido>2</IssRetido>
+          <ValorIss>93.79</ValorIss>
+          <BaseCalculo>3126.40</BaseCalculo>
+          <Aliquota>0.03</Aliquota>
+          <ValorLiquidoNfse>3126.40</ValorLiquidoNfse>
+        </Valores>
+        <ItemListaServico>0702</ItemListaServico>
+        <Discriminacao>Instalação elétrica de iluminação LED - loja 215</Discriminacao>
+      </Servico>
+      <PrestadorServico>
+        <IdentificacaoPrestador><Cnpj>27551983000100</Cnpj></IdentificacaoPrestador>
+        <RazaoSocial>Luz &amp; Cia Instalações Elétricas S.A.</RazaoSocial>
+      </PrestadorServico>
+      <TomadorServico>
+        <IdentificacaoTomador><CpfCnpj><Cnpj>80451639000122</Cnpj></CpfCnpj></IdentificacaoTomador>
+        <RazaoSocial>Supermercados Horizonte Ltda</RazaoSocial>
+      </TomadorServico>
+    </InfNfse>
+  </Nfse>
+  <NfseCancelamento>
+    <Confirmacao><DataHora>2026-10-22T11:00:00</DataHora></Confirmacao>
+  </NfseCancelamento>
+</CompNfse>

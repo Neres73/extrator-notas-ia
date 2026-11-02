@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.01">
+  <infNFSe Id="NFS35503082041287365000126000000000000490226100000001">
+    <nNFSe>4902</nNFSe>
+    <dhProc>2026-10-30T11:20:00-03:00</dhProc>
+    <emit><CNPJ>41287365000126</CNPJ><xNome>FrioTec Refrigeração Comercial Ltda</xNome></emit>
+    <valores><vBC>1500.00</vBC><pAliqAplic>5.00</pAliqAplic><vISSQN>75.00</vISSQN><vLiq>1500.00</vLiq></valores>
+    <DPS versao="1.01">
+      <infDPS Id="DPS355030820412873650001260000100000000004902">
+        <dhEmi>2026-10-30T11:18:00-03:00</dhEmi>
+        <dCompet>2026-10-30</dCompet>
+        <prest><CNPJ>41287365000126</CNPJ></prest>
+        <toma><CNPJ>80451639000122</CNPJ><xNome>Supermercados Horizonte Ltda</xNome></toma>
+        <serv><cServ><cTribNac>170101</cTribNac><xDescServ>Consultoria em eficiência energética</xDescServ></cServ></serv>
+        <valores>
+          <vServPrest><vServ>1500.00</vServ></vServPrest>
+          <trib><tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>1</tpRetISSQN></tribMun></trib>
+        </valores>
+      </infDPS>
+    </DPS>
+  </infNFSe>
+</NFSe>

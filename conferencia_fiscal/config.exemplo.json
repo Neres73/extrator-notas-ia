@@ -1,0 +1,23 @@
+{
+  "aba_parametros": null,
+  "aba_fila": null,
+  "cnpj_raiz_tomador": null,
+  "tolerancia": 0.05,
+  "valor_minimo_retencao": 10.00,
+  "colunas_parametros": {
+    "item_lc116": ["Código Serviço"],
+    "codigo_municipal": ["Código Municipal"],
+    "plu": ["PLU"],
+    "irrf": ["IRRF %"],
+    "pcc": ["PCC %"],
+    "inss": ["INSS %"],
+    "retem_iss": ["Retém ISS"]
+  },
+  "colunas_fila": {
+    "numero_nota": ["Nº Nota"],
+    "cnpj_prestador": ["CNPJ"],
+    "ocorrencia": ["Ocorrência"],
+    "pedido": ["Pedido"],
+    "plu_atual": ["PLU"]
+  }
+}

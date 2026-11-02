@@ -128,6 +128,17 @@ python -m pytest
 
 Os testes não chamam nenhuma API paga: a IA é trocada por provedores falsos para simular acerto, resposta fora do formato e queda da conexão.
 
+## Parte 2: conferência fiscal pelo XML e pedidos de correção
+
+A pasta [`conferencia_fiscal/`](conferencia_fiscal/) leva o projeto para o caso real do contas a pagar: em vez de só extrair dados, **decide o que fazer com cada nota**.
+
+- Lê o XML da NFS-e nos três formatos em uso: **padrão nacional** (obrigatório desde 2026), **ABRASF** 1.0/2.x e **Prefeitura de São Paulo**
+- Extrai código de serviço (LC 116, código nacional ou municipal), ISS e retenções federais (IRRF, PIS/COFINS/CSLL, INSS)
+- Consulta uma **base de parâmetros fiscais** (código de serviço → item de compra e retenções esperadas) e classifica cada nota em **OK**, **CORRIGIR** (gera pedido de correção) ou **REVISAR** (exceção com motivo)
+- Liga cada nota à fila de pagamento por CNPJ + número e gera a planilha de pedidos para lançamento no SAP via SAP GUI Scripting, com **modo simulação** por padrão
+
+Quando a nota tem XML, a leitura é exata e não precisa de IA. A IA da Parte 1 fica para as notas que só existem em PDF. Detalhes em [`conferencia_fiscal/README.md`](conferencia_fiscal/README.md).
+
 ## Estrutura
 
 ```
@@ -142,13 +153,14 @@ cli.py          processamento em lote pela linha de comando
 n8n/            fluxo pronto para importar no n8n
 exemplos/       notas fictícias, incluindo casos com erro proposital
 tests/          testes automatizados (pytest)
+conferencia_fiscal/  Parte 2: leitura de XML de NFS-e, regras fiscais e pedidos de correção
 ```
 
 ## Próximos passos
 
 - Ler PDF escaneado (imagem) com o modo de visão do modelo
-- Conferir o CNPJ do fornecedor contra um cadastro de fornecedores
-- Comparar a nota com o pedido de compra (valor e itens) antes de liberar o pagamento
+- Ligar a Parte 1 à Parte 2: nota sem XML lida pela IA entra direto na conferência fiscal
+- Completar o roteiro da transação de correção no SAP e validar com notas reais em modo simulação
 
 ## Contexto
 
