@@ -28,21 +28,34 @@ base fiscal ───┘   (3 layouts)       (código → PLU, %)             �
 
 ## Como rodar
 
-```bash
-pip install -r requirements.txt
+O processo inteiro roda a partir de **um arquivo**. No dia a dia, basta dar dois cliques em `executar.bat`.
 
-# confere todos os XMLs da pasta
-python processar.py --xml exemplos/xml --parametros exemplos/parametros_fiscais_exemplo.xlsx
+**Uma vez só (configuração):**
 
-# a partir da fila de NFS-e (só as notas da fila; avisa as que não têm XML)
-python processar.py --xml "\\servidor\xml_nfse" --parametros base_fiscal.xlsx --fila fila_nfse.xlsx
+1. `pip install -r requirements.txt`
+2. Copie `config.exemplo.json` para `config.json` e aponte para os arquivos reais:
 
-# mostra o que seria lançado no SAP, sem lançar
-python processar.py ... --sap
-
-# lança de verdade (com o SAP aberto e logado)
-python processar.py ... --sap --lancar
+```json
+"entrada": {
+  "pasta_xml": "//servidor/fiscal/xml_nfse",
+  "parametros": "C:/Users/voce/Documents/base_parametros_fiscais.xlsx",
+  "fila": "C:/Users/voce/Downloads/fila_nfse.xlsx"
+},
+"saida": { "pasta": "saida", "abrir_planilha": true },
+"sap": "simular"
 ```
+
+Nos caminhos do Windows, use barra normal (`/`) ou barra dupla (`\\`).
+
+**Todo dia:** dois cliques em `executar.bat`, ou `python processar.py`. O programa lê os XMLs, confere com a base, salva a planilha em `saida/` com data e hora, abre essa planilha no Excel e faz a etapa do SAP de acordo com o modo escolhido:
+
+| `"sap"` | O que faz |
+|---|---|
+| `"nao"` | Só gera a planilha |
+| `"simular"` | Gera a planilha e mostra o que seria lançado (padrão) |
+| `"lancar"` | Gera a planilha e lança os pedidos de correção (SAP aberto e logado) |
+
+Sem `config.json`, o programa roda com os arquivos de exemplo. Para uma execução pontual diferente, os argumentos sobrescrevem o config, por exemplo `python processar.py --fila outra_fila.xlsx --sap nao`.
 
 Os exemplos usam empresas, CNPJs e alíquotas **fictícios**. As alíquotas de `parametros_fiscais_exemplo.xlsx` são só para teste.
 
@@ -61,7 +74,7 @@ Regras usadas no cálculo do esperado:
 
 ## Ajustar para as planilhas reais
 
-Copie `config.exemplo.json` para `config.json` e ajuste os nomes das colunas se forem diferentes. A procura ignora maiúsculas, acentos e espaços, e o cabeçalho pode estar em qualquer uma das 10 primeiras linhas. Rode com `--config config.json`.
+Copie `config.exemplo.json` para `config.json` e ajuste os nomes das colunas se forem diferentes. A procura ignora maiúsculas, acentos e espaços, e o cabeçalho pode estar em qualquer uma das 10 primeiras linhas. O `processar.py` usa o `config.json` automaticamente.
 
 Também no config:
 - `cnpj_raiz_tomador`: os 8 primeiros dígitos do CNPJ da empresa. Nota para outro tomador vai para revisão.
@@ -85,7 +98,8 @@ correcao_nfse/
   relatorio.py     planilha de saída
   sap.py           SAP GUI Scripting (simulação por padrão)
   utils.py         XML sem namespace (reaproveitado da macro gerar_pedido), CNPJ, números, códigos
-processar.py       linha de comando
+processar.py       roda o processo inteiro (lê o config.json)
+executar.bat       dois cliques para rodar no Windows
 exemplos/          XMLs fictícios dos 3 layouts, base e fila de exemplo
 tests/             pytest
 ```

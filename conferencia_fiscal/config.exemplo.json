@@ -1,9 +1,21 @@
 {
-  "aba_parametros": null,
-  "aba_fila": null,
+  "entrada": {
+    "pasta_xml": "exemplos/xml",
+    "parametros": "exemplos/parametros_fiscais_exemplo.xlsx",
+    "fila": "exemplos/fila_nfse_exemplo.xlsx"
+  },
+  "saida": {
+    "pasta": "saida",
+    "abrir_planilha": true
+  },
+  "sap": "simular",
+
   "cnpj_raiz_tomador": null,
   "tolerancia": 0.05,
   "valor_minimo_retencao": 10.00,
+
+  "aba_parametros": null,
+  "aba_fila": null,
   "colunas_parametros": {
     "item_lc116": ["Código Serviço"],
     "codigo_municipal": ["Código Municipal"],

@@ -16,6 +16,9 @@ from dataclasses import dataclass
 from .regras import Resultado
 from .utils import moeda
 
+# Mude para True quando _preencher_transacao tiver o roteiro real da transação de correção.
+ROTEIRO_PRONTO = False
+
 
 @dataclass
 class RetornoLancamento:
@@ -27,8 +30,11 @@ class RetornoLancamento:
 
 def conectar_sap():
     """Usa a sessão do SAP GUI que já está aberta e logada (não guarda senha)."""
-    import win32com.client  # pywin32, só existe no Windows
-
+    try:
+        import win32com.client  # pywin32, só existe no Windows
+    except ImportError as erro:
+        raise RuntimeError("Para lançar no SAP é preciso rodar no Windows com o pywin32 instalado "
+                           "(pip install pywin32).") from erro
     try:
         engine = win32com.client.GetObject("SAPGUI").GetScriptingEngine
     except Exception as erro:  # noqa: BLE001
@@ -77,6 +83,10 @@ def lancar(resultados: list[Resultado], simulacao: bool = True, pausa: float = 0
             retornos.append(RetornoLancamento(n.numero or "", True, "simulação"))
         return retornos
 
+    if not pedidos:
+        return retornos
+    if not ROTEIRO_PRONTO:
+        _preencher_transacao(None, pedidos[0])     # levanta o aviso antes de abrir o SAP
     sessao = conectar_sap()
     for r in pedidos:
         n = r.nota

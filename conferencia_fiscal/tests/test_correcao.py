@@ -186,3 +186,49 @@ def test_sap_em_simulacao_nao_conecta(base, config, capsys):
     retornos = lancar(lote.resultados, simulacao=True)
     assert len(retornos) == 2 and all(r.mensagem == "simulação" for r in retornos)
     assert "nada foi enviado ao SAP" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------- execução com um arquivo só
+def test_config_resolve_caminhos_relativos_a_pasta_do_config(tmp_path):
+    (tmp_path / "config.json").write_text(
+        '{"entrada": {"pasta_xml": "xmls", "parametros": "C:/base/fiscal.xlsx"}, "sap": "nao"}', "utf-8")
+    cfg = Config.carregar(tmp_path / "config.json")
+    assert cfg.pasta_xml == tmp_path / "xmls"
+    assert str(cfg.parametros).replace("\\", "/").endswith("C:/base/fiscal.xlsx")
+    assert cfg.fila is None
+    assert cfg.pasta_saida == tmp_path / "saida"
+    assert cfg.sap == "nao"
+
+
+def test_config_com_barra_invertida_simples_explica_o_erro(tmp_path):
+    (tmp_path / "config.json").write_text('{"entrada": {"pasta_xml": "C:\\pasta"}}', "utf-8")
+    with pytest.raises(ValueError, match="barra"):
+        Config.carregar(tmp_path / "config.json")
+
+
+def test_modo_sap_invalido(tmp_path):
+    (tmp_path / "config.json").write_text('{"sap": "sim"}', "utf-8")
+    with pytest.raises(ValueError, match="simular"):
+        Config.carregar(tmp_path / "config.json")
+
+
+def test_processar_sem_argumentos_usa_exemplos(tmp_path, monkeypatch, capsys):
+    import processar
+    monkeypatch.setattr(sys, "argv", ["processar.py", "--sap", "lancar"])
+    cfg_original = Config.carregar
+
+    def config_com_saida_temporaria(caminho):
+        cfg = cfg_original(caminho)
+        cfg.pasta_saida = tmp_path
+        cfg.abrir_planilha = False
+        return cfg
+
+    monkeypatch.setattr(processar.Config, "carregar", config_com_saida_temporaria)
+    with pytest.raises(SystemExit) as fim:
+        processar.main()
+    saida = capsys.readouterr().out
+    assert fim.value.code == 0
+    assert "rodando com os EXEMPLOS" in saida
+    assert "3 para corrigir" in saida
+    assert "Nada foi lançado" in saida               # roteiro do SAP ainda não configurado
+    assert len(list(tmp_path.glob("correcao_nfse_*.xlsx"))) == 1
