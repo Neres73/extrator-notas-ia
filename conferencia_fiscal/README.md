@@ -84,7 +84,7 @@ Também no config:
 
 1. **PIS/COFINS/CSLL no padrão nacional**: o leitor usa `vRetCSLL` como a soma das três retenções, como está no leiaute vigente. Confira com 2 ou 3 notas reais se o valor bate com o que a área considera retido.
 2. **Código municipal de São Paulo**: o XML de SP traz o código da prefeitura (5 dígitos), não o item da LC 116. A base precisa ter a coluna de código municipal para essas notas.
-3. Rode alguns dias só gerando a planilha (sem `--sap --lancar`) e compare com o trabalho manual.
+3. Rode alguns dias com `"sap": "simular"` e compare a planilha com o trabalho manual antes de mudar para `"lancar"`.
 
 ## Estrutura
 
