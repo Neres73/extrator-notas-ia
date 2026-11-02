@@ -139,6 +139,16 @@ A pasta [`conferencia_fiscal/`](conferencia_fiscal/) leva o projeto para o caso 
 
 Quando a nota tem XML, a leitura é exata e não precisa de IA. A IA da Parte 1 fica para as notas que só existem em PDF. Detalhes em [`conferencia_fiscal/README.md`](conferencia_fiscal/README.md).
 
+## Parte 3: escolha do item de compra (PLU) pela NFS-e
+
+A pasta [`escolha_plu/`](escolha_plu/) resolve a etapa mais demorada do processo real: decidir, nota a nota, qual item de compra (PLU) usar na ordem de manutenção. Ela usa a mesma regra da base de parâmetros fiscais da área:
+
+1. código de serviço da NFS-e → SERV (14.01 → `SERV1401`)
+2. retenções federais destacadas na nota (IR, PCC, INSS) → qual categoria de serviço liberada para o fornecedor vale
+3. SERV + categoria → PLU
+
+O programa lê o PDF de cada nota (baixado pela macro [baixar_nota](https://github.com/Neres73/baixar_nota)), preenche a coluna do PLU na planilha que a macro do SAP já usa e marca em amarelo, com o motivo, o que não dá para decidir sozinho. Isso inclui a nota cuja tributação vai gerar crítica no agendamento. Detalhes em [`escolha_plu/README.md`](escolha_plu/README.md).
+
 ## Estrutura
 
 ```
@@ -154,6 +164,7 @@ n8n/            fluxo pronto para importar no n8n
 exemplos/       notas fictícias, incluindo casos com erro proposital
 tests/          testes automatizados (pytest)
 conferencia_fiscal/  Parte 2: leitura de XML de NFS-e, regras fiscais e pedidos de correção
+escolha_plu/         Parte 3: escolha do PLU de cada ordem pela NFS-e em PDF e pela base fiscal
 ```
 
 ## Próximos passos

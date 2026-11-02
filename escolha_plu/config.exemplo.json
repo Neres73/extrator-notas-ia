@@ -1,0 +1,17 @@
+{
+  "planilha_om": "C:/Users/SEU_USUARIO/Documents/teste_om.xlsm",
+  "aba_om": null,
+  "base_fiscal": "C:/Users/SEU_USUARIO/Documents/base_parametros_fiscais.xlsb",
+  "pasta_pdfs": "C:/Users/SEU_USUARIO/Documents/notas_om",
+  "pasta_saida": "saida",
+  "abrir_planilha": true,
+
+  "baixar_notas": { "usar": false },
+  "pasta_macro_baixar_nota": "C:/Users/SEU_USUARIO/PycharmProjects/baixar_nota",
+
+  "contas_preferidas": [],
+  "plu_preferido": {},
+  "codigos_municipais": {},
+
+  "se_revisar": "limpar"
+}
