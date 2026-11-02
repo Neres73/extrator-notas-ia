@@ -1,8 +1,0 @@
-config.json
-saida/
-__pycache__/
-.pytest_cache/
-.venv/
-*.xlsb
-*.xlsm
-notas*/

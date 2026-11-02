@@ -1,0 +1,175 @@
+{
+  "name": "Assistente de PLU para NFS-e",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Qual PLU usar nesta nota?",
+        "formDescription": "Envie o PDF da NFS-e e o código SAP do fornecedor. A resposta vem da base de parâmetros fiscais, com o motivo da escolha.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Fornecedor",
+              "placeholder": "Código SAP do fornecedor (ex.: 1001)",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Nota fiscal",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "path": "sugerir-plu",
+          "buttonLabel": "Sugerir PLU"
+        }
+      },
+      "id": "3f1a2b4c-5d6e-4f70-8a91-b2c3d4e5f601",
+      "name": "Formulário: nota + fornecedor",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [0, 300],
+      "webhookId": "7b2c3d4e-5f60-4718-9a2b-c3d4e5f6a702"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/sugerir-plu",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "nota",
+              "inputDataFieldName": "Nota_fiscal"
+            },
+            {
+              "parameterType": "formData",
+              "name": "fornecedor",
+              "value": "={{ $json.Fornecedor }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "9c3d4e5f-6a7b-4c8d-9e0f-a1b2c3d4e503",
+      "name": "API: sugerir PLU",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 300],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d4e5f6a7-b8c9-4d0e-8f1a-2b3c4d5e6f04",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "OK",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e5f6a7b8-c9d0-4e1f-9a2b-3c4d5e6f7a05",
+      "name": "PLU definido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [520, 200]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "={{ 'Use o PLU ' + $json.plu }}",
+        "completionMessage": "={{ ($json.fornecedor || 'Fornecedor') + ' · ' + $json.motivo }}",
+        "options": {}
+      },
+      "id": "f6a7b8c9-d0e1-4f2a-8b3c-4d5e6f7a8b06",
+      "name": "Tela: PLU sugerido",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [780, 100],
+      "webhookId": "a7b8c9d0-e1f2-4a3b-9c4d-5e6f7a8b9c07"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Esta nota precisa de revisão",
+        "completionMessage": "={{ $json.motivo + ($json.opcoes && $json.opcoes.length ? ' · Opções: ' + $json.opcoes.join(' / ') : '') }}",
+        "options": {}
+      },
+      "id": "b8c9d0e1-f2a3-4b4c-8d5e-6f7a8b9c0d08",
+      "name": "Tela: revisar",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [780, 300],
+      "webhookId": "c9d0e1f2-a3b4-4c5d-9e6f-7a8b9c0d1e09"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Não foi possível analisar a nota",
+        "completionMessage": "A API não respondeu ou recusou o arquivo. Confira se ela está rodando (uvicorn api:app) e se o arquivo é o PDF da NFS-e.",
+        "options": {}
+      },
+      "id": "d0e1f2a3-b4c5-4d6e-8f7a-8b9c0d1e2f10",
+      "name": "Tela: erro na API",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [520, 460],
+      "webhookId": "e1f2a3b4-c5d6-4e7f-9a8b-9c0d1e2f3a11"
+    },
+    {
+      "parameters": {
+        "content": "## Assistente de PLU\n1. Suba a API: `uvicorn api:app`\n2. Ative este fluxo e abra a URL do formulário\n3. Envie um PDF de `exemplos/notas` com o fornecedor 1001\n\nA leitura e a regra fiscal ficam na API; o n8n só monta o formulário e mostra a resposta.\n\nn8n em Docker? Troque `localhost` por `host.docker.internal`.",
+        "height": 300,
+        "width": 380
+      },
+      "id": "f2a3b4c5-d6e7-4f8a-9b0c-0d1e2f3a4b12",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-60, -40]
+    }
+  ],
+  "connections": {
+    "Formulário: nota + fornecedor": {
+      "main": [[{ "node": "API: sugerir PLU", "type": "main", "index": 0 }]]
+    },
+    "API: sugerir PLU": {
+      "main": [
+        [{ "node": "PLU definido?", "type": "main", "index": 0 }],
+        [{ "node": "Tela: erro na API", "type": "main", "index": 0 }]
+      ]
+    },
+    "PLU definido?": {
+      "main": [
+        [{ "node": "Tela: PLU sugerido", "type": "main", "index": 0 }],
+        [{ "node": "Tela: revisar", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {},
+  "active": false
+}

@@ -1,9 +1,12 @@
 .env
+config.json
+saida/
+*.xlsb
+*.xlsm
 .venv/
 venv/
 __pycache__/
 *.pyc
 .pytest_cache/
-saida/
 .idea/
 .vscode/
