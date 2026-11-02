@@ -67,6 +67,7 @@ async def sugerir_plu(nota: UploadFile, fornecedor: str = Form(...), preco: str 
         "fornecedor": CONF.base.nomes.get(fornecedor.strip().lstrip("0")),
         "nota": None if lida is None else {
             "codigo_servico": lida.item_lc116,
+            "como_achou_o_codigo": lida.origem_codigo or None,
             "codigo_municipal": lida.codigo_municipal,
             "valor_servicos": float(lida.valor_servicos) if lida.valor_servicos is not None else None,
             "tributacao": str(lida.tributacao(valor)) if lida.leu_retencoes else None,

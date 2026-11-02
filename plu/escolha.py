@@ -68,7 +68,15 @@ def escolher(base: BaseFiscal, fornecedor, nota: DadosNota | None, preco: Decima
 
     cats = base.categorias(fornecedor)
     if not cats:
-        return Escolha("REVISAR", motivo=f"Fornecedor {fornecedor} não está na base fiscal (aba Prestadores x REINF)")
+        # O PLU não é do fornecedor (a aba PLUs vale para todos). O que falta é saber quais categorias e
+        # tributação estão cadastradas para ELE no SAP; sem isso, qualquer PLU pode dar crítica.
+        opcoes = []
+        if nota is not None and nota.serv:
+            opcoes = [f"{p.plu} {p.descricao} (cat. {p.categoria} {p.descricao_categoria})"
+                      for p in base.plus if p.serv == nota.serv]
+        return Escolha("REVISAR", opcoes=opcoes,
+                       motivo=f"Fornecedor {fornecedor} não está na base fiscal (aba Prestadores x REINF): "
+                              "sem o padrão de tributação dele, não dá para saber qual categoria evita crítica")
     if nota is None:
         return Escolha("REVISAR", motivo="PDF da nota não encontrado")
     if not nota.serv:

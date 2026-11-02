@@ -208,3 +208,9 @@ def test_planilha_preenche_componente_e_marca_revisar(base, tmp_path):
     assert ws["C2"].value == 900003 and ws["I2"].value == "OK" and "antes: 9009999" in ws["J2"].value
     assert ws["C3"].value is None and ws["I3"].value == "REVISAR"
     assert load_workbook(origem).active["C2"].value == 9009999        # original intacto
+
+
+def test_fornecedor_fora_da_base_lista_os_plus_do_servico(base):
+    e = escolher(base, 9999, nota(), None)
+    assert e.status == "REVISAR" and "padrão de tributação" in e.motivo
+    assert len(e.opcoes) == 4 and all("SERV1401" in o for o in e.opcoes)
