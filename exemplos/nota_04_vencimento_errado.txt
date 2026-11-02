@@ -1,0 +1,15 @@
+NFS-e  -  Nota Fiscal de Serviços Eletrônica
+Número da Nota: 1207
+Emissão: 25/10/2026
+
+Prestador: Elevar Manutenção de Elevadores Ltda
+CNPJ: 19.364.852/0001-96
+
+Tomador: Supermercados Horizonte Ltda - CNPJ 80.451.639/0001-22
+
+Serviços prestados:
+- Manutenção preventiva mensal elevador de carga - loja 088: R$ 980,00
+- Substituição de cabo de tração: R$ 1.540,00
+
+Data de Vencimento: 25/09/2026
+Valor Total dos Serviços: R$ 2.720,00
