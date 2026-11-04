@@ -188,3 +188,16 @@ def test_nota_sem_retencao_na_tela_do_nix():
            for x in _tela_nix()]
     nota = nota_da_tela("1", ler_campos(els))
     assert nota.tributacao() == Tributacao()
+
+
+def test_conta_bloqueada_some_da_escolha(tmp_path):
+    import json
+    from plu.servico import montar
+    base = RAIZ / "exemplos" / "base_fiscal_exemplo.xlsx"
+    cfg = {"base_fiscal": str(base), "contas_bloqueadas": ["400200"]}
+    conf = montar(cfg, tmp_path)
+    assert all(p.conta != "400200" for p in conf.base.plus)
+    import pytest
+    with pytest.raises(ValueError, match="conta bloqueada"):
+        montar({**cfg, "plu_preferido": {"SERV1401|100": "900102"}}, tmp_path)
+    json.dumps(cfg)

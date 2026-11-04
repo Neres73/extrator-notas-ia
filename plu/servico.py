@@ -47,8 +47,16 @@ def montar(cfg: dict, pasta: Path) -> Configuracao:
     if not base_arq or not base_arq.is_file():
         raise ValueError(f"Base fiscal não encontrada: {base_arq or '(preencha base_fiscal no config)'}")
     ia = cfg.get("ia", {})
+    base = carregar(base_arq)
+    bloqueadas = {str(c) for c in cfg.get("contas_bloqueadas", [])}
+    if bloqueadas:                      # PLUs dessas contas nunca são usados
+        base.plus = [p for p in base.plus if p.conta not in bloqueadas]
+        fixos = {p.plu for p in base.plus}
+        for chave, plu in cfg.get("plu_preferido", {}).items():
+            if str(plu) not in fixos:
+                raise ValueError(f"plu_preferido {chave} = {plu}: PLU não está na base fiscal ou é de conta bloqueada")
     return Configuracao(
-        base=carregar(base_arq),
+        base=base,
         provedor_ia=criar_provedor(ia.get("provedor"), ia.get("modelo")),
         codigos_municipais={re.sub(r"\D", "", k).lstrip("0"): v for k, v in cfg.get("codigos_municipais", {}).items()},
         plu_preferido=cfg.get("plu_preferido", {}),
