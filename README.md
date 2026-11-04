@@ -88,18 +88,43 @@ Importe [`n8n/fluxo_sugerir_plu.json`](n8n/fluxo_sugerir_plu.json) (*Workflows �
 
 Copie `.env.example` para `.env`, coloque a chave (a do Gemini é gratuita em [aistudio.google.com/apikey](https://aistudio.google.com/apikey)) e mude `"ia": {"provedor": "gemini"}` no config. Use só dados fictícios ou um provedor aprovado pela empresa.
 
+## Processo completo das OMs de correção
+
+`correcao.py` (ou dois cliques em `executar_correcao.bat`) roda o processo de ponta a ponta, partindo só da Base Geral de pendências:
+
+```mermaid
+flowchart LR
+    A[Base Geral] -->|time, filas, valor máximo| B[PDF + base fiscal<br/>PLU de cada nota]
+    B -- PLU certo --> C[ME2K<br/>ordem original do pedido]
+    B -- dúvida --> R[Relatório: revisar]
+    C --> D[Planilha de criação em massa<br/>REA ordem + centro + local]
+    D --> E[Transação de criação<br/>OMs novas]
+    E --> F[IW32<br/>fornecedor, PLU, preço]
+    F --> G[Relatório final]
+```
+
+- **Só cria OM para nota com PLU definido.** O que a regra fiscal não decide fica no relatório com o motivo, antes de qualquer lançamento no SAP.
+- A planilha de criação é preenchida pelo próprio Excel a partir do modelo da equipe (as fórmulas da aba de envio são recalculadas); o modelo nunca é alterado e o lote respeita quantas linhas ele comporta.
+- O local de instalação vem da planilha de regiões (mais atualizada) e, na falta, da aba de locais do modelo.
+- Cada OM nova é ligada à sua linha pelo número do registro no relatório da transação.
+- Antes de criar as OMs, o programa pede confirmação (`"confirmar_antes_de_criar"`). Se a IW32 falhar numa OM, ele para ali em vez de seguir lançando; as OMs restantes ficam no arquivo no formato da planilha teste om.
+- Códigos internos (transação, tipos de nota e ordem, grupos de compras, requisitante) ficam só no `config.json`, que não vai para o repositório.
+
+Saídas em `saida/`: a planilha de criação de cada lote, a teste om com as OMs criadas e o `relatorio_correcao_<data>.xlsx` com o resultado de cada ocorrência.
+
 ## Testes
 
 ```bash
 python -m pytest
 ```
 
-São 47 testes, sem chamar nenhuma API paga: a IA é trocada por um provedor falso que acerta, responde fora do formato, devolve CNAE no lugar do código e fica fora do ar. Os PDFs de exemplo são gerados por `python exemplos/gerar_exemplos.py`.
+São 55 testes, sem chamar nenhuma API paga: a IA é trocada por um provedor falso que acerta, responde fora do formato, devolve CNAE no lugar do código e fica fora do ar. Os PDFs de exemplo são gerados por `python exemplos/gerar_exemplos.py`.
 
 ## Estrutura
 
 ```
 escolher_plu.py    planilha: lê as ordens, analisa cada nota, salva a cópia com o PLU
+correcao.py        processo completo: Base Geral -> PLU -> ME2K -> criação das OMs -> IW32
 api.py             API FastAPI (POST /sugerir-plu)
 n8n/               formulário pronto para importar no n8n
 plu/
@@ -111,6 +136,9 @@ plu/
   servico.py       o caminho de uma nota (usado pela planilha e pela API)
   planilha_om.py   leitura e preenchimento da planilha da macro (VBA preservado)
   baixar.py        integração com a macro baixar_nota
+  base_geral.py    leitura e filtro da Base Geral de pendências
+  input_om.py      planilha de criação em massa (modelo + regiões)
+  sap.py           ME2K, transação de criação e IW32 via SAP GUI Scripting
 exemplos/          base, planilha e notas fictícias + gerador
 tests/             pytest
 ```

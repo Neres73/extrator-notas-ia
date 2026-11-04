@@ -5,15 +5,63 @@
   "pasta_pdfs": "exemplos/notas",
   "pasta_saida": "saida",
   "abrir_planilha": true,
-
-  "ia": { "provedor": "nenhum", "modelo": null },
-
-  "baixar_notas": { "usar": false },
+  "ia": {
+    "provedor": "nenhum",
+    "modelo": null
+  },
+  "baixar_notas": {
+    "usar": false
+  },
   "pasta_macro_baixar_nota": "C:/Users/SEU_USUARIO/PycharmProjects/baixar_nota",
-
-  "contas_preferidas": ["400100"],
+  "contas_preferidas": [
+    "400100"
+  ],
   "plu_preferido": {},
-  "codigos_municipais": { "07498": "14.01" },
-
-  "se_revisar": "limpar"
+  "codigos_municipais": {
+    "07498": "14.01"
+  },
+  "se_revisar": "limpar",
+  "correcao": {
+    "base_geral": "C:/Users/SEU_USUARIO/Desktop/Base_Geral.xlsx",
+    "aba_base": "Base",
+    "time": "PCM",
+    "valor_maximo": 10000,
+    "filas": [
+      "Impostos Federais",
+      "Código de Serviço Divergente",
+      "NF Serviço x Pedido Material",
+      "Valor Divergente"
+    ],
+    "modelo_input": "C:/Users/SEU_USUARIO/Desktop/INPUT_ORDEM_EM_MASSA.xlsx",
+    "modelo_teste_om": "C:/Users/SEU_USUARIO/Desktop/teste_om.xlsm",
+    "planilha_regioes": "C:/Users/SEU_USUARIO/Desktop/Regioes.xlsb",
+    "transacao_criacao": "TRANSACAO_DE_CRIACAO",
+    "prefixo_texto_breve": "REA ordem",
+    "prefixo_pedido": "PEDIDO AJUSTE",
+    "confirmar_antes_de_criar": true,
+    "campos_fixos": {
+      "Tipo de nota": "XX",
+      "Grupo de codes – codificação": "GRUPO",
+      "Codificação": "0001",
+      "Texto descritivo para nota": "PEDIDO AJUSTE ",
+      "Grupo de codes - partes de objetos": "GRUPO",
+      "Texto breve do code": "DESCRICAO",
+      "Parte do objeto": "XX",
+      "Grupo de códigos – problemas": "GRUPO",
+      "Texto breve para sintoma": "DESCRICAO",
+      "Código do problema ou do dano": "XX",
+      "Prioridade": 1,
+      "Codigo Centro Trabalho": "CENTRO_TRABALHO",
+      "Tipo de ordem": "XXXX",
+      "Descrição do tipo de atividade": "Reabertura",
+      "Tipo de atividade de manutenção": "XXX",
+      "Txt.breve operação": "reabertura correção"
+    },
+    "iw32": {
+      "executar": true,
+      "requisitante": "USUARIO_SAP",
+      "grupo_compras": "XXX",
+      "org_compras": "XXXX"
+    }
+  }
 }
