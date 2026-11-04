@@ -321,3 +321,7 @@ if __name__ == "__main__":
     except (ValueError, OSError, RuntimeError) as erro:
         print(f"\n✖ {erro}")
         sys.exit(1)
+    except ImportError as erro:
+        print(f"\n✖ Biblioteca não instalada ({erro.name}). No terminal, dentro da pasta do projeto, rode:\n"
+              f'  "{sys.executable}" -m pip install -r requirements.txt')
+        sys.exit(1)
