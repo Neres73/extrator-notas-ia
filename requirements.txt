@@ -9,6 +9,10 @@ python-multipart>=0.0.9
 httpx>=0.27
 pytest>=8.0
 pywin32>=306; sys_platform == "win32"
+# download das notas no SAP (macro baixar_nota)
+pywinauto>=0.6; sys_platform == "win32"
+pyautogui>=0.9
+pyperclip>=1.8
 reportlab>=4.0
 # IA (opcional): só se "ia.provedor" for gemini ou claude
 google-genai>=1.0
