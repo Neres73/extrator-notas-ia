@@ -140,3 +140,14 @@ def test_liga_om_nova_pela_ordem_das_linhas():
 
 def test_lotes_respeitam_a_capacidade_da_planilha():
     assert [len(l) for l in lotes(list(range(300)), 138)] == [138, 138, 24]
+
+
+def test_historico_impede_criar_om_duas_vezes(tmp_path):
+    from correcao import gravar_historico, ler_historico
+    arq = tmp_path / "historico.csv"
+    assert ler_historico(arq) == {}
+    it = _item("123")
+    it.om_nova, it.ordem_original, it.plu = "46502251", "46321315", "900101"
+    gravar_historico(arq, [it])
+    gravar_historico(arq, [])                                    # segunda gravação não repete o cabeçalho
+    assert ler_historico(arq)["123"].startswith("OM 46502251 em ")

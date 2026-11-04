@@ -14,6 +14,7 @@ No fim sai um relatório com o que aconteceu com cada ocorrência.
 
 from __future__ import annotations
 
+import csv
 import sys
 import time
 from dataclasses import dataclass, field
@@ -118,6 +119,26 @@ def salvar_relatorio(destino: Path, itens: list[Item]) -> Path:
     return destino
 
 
+def ler_historico(arquivo: Path) -> dict[str, str]:
+    """{ocorrência: 'OM 123 em 04/11/2026'} das execuções anteriores: impede criar OM duas vezes."""
+    if not arquivo.is_file():
+        return {}
+    with arquivo.open(encoding="utf-8-sig", newline="") as f:
+        return {ln["ocorrencia"]: f"OM {ln['om_nova']} em {ln['data']}" for ln in csv.DictReader(f, delimiter=";")}
+
+
+def gravar_historico(arquivo: Path, itens: list[Item]) -> None:
+    novo = not arquivo.is_file()
+    arquivo.parent.mkdir(parents=True, exist_ok=True)
+    with arquivo.open("a", encoding="utf-8-sig", newline="") as f:
+        w = csv.writer(f, delimiter=";")
+        if novo:
+            w.writerow(["ocorrencia", "pedido", "ordem_original", "om_nova", "nota_nova", "plu", "data"])
+        for it in itens:
+            w.writerow([it.oc.ocorrencia, it.oc.pedido, it.ordem_original, it.om_nova, it.nota_nova, it.plu,
+                        f"{datetime.now():%d/%m/%Y %H:%M}"])
+
+
 def confirmar(pergunta: str) -> bool:
     return input(f"{pergunta} [s/N] ").strip().lower() in ("s", "sim")
 
@@ -141,6 +162,8 @@ def main() -> int:
     carimbo = f"{datetime.now():%Y-%m-%d_%H%M}"
     pasta_saida = resolver(PASTA, cfg.get("pasta_saida")) or PASTA / "saida"
     pasta_pdfs = resolver(PASTA, cfg.get("pasta_pdfs"))
+    if not pasta_pdfs:
+        raise ValueError('"pasta_pdfs" não preenchido no config')
     pasta_pdfs.mkdir(parents=True, exist_ok=True)
 
     # 1. Base Geral -------------------------------------------------------------------------
@@ -157,22 +180,36 @@ def main() -> int:
         print("Nada para processar.")
         return 0
 
+    historico_arq = pasta_saida / "historico_correcao.csv"
+    historico = ler_historico(historico_arq)
+    por_pedido: dict[str, int] = {}
+    for it in itens:
+        por_pedido[it.oc.pedido] = por_pedido.get(it.oc.pedido, 0) + 1
+    for it in itens:
+        if it.oc.ocorrencia in historico:
+            it.parar("Filtro", "REVISAR", f"OM de correção já criada para esta ocorrência ({historico[it.oc.ocorrencia]})")
+        elif not it.oc.valor or it.oc.valor <= 0:
+            it.parar("Filtro", "REVISAR", "Vlr Total zerado ou vazio na Base Geral")
+        elif por_pedido[it.oc.pedido] > 1:
+            it.mensagens.append(f"Aviso: pedido {it.oc.pedido} aparece em {por_pedido[it.oc.pedido]} ocorrências")
+    itens_ativos = [i for i in itens if i.status == "PENDENTE"]
+
     # 2. PDFs e PLU -------------------------------------------------------------------------
     conf = montar(cfg, PASTA)
-    faltando = sorted({i.oc.ocorrencia for i in itens if not achar_pdf(pasta_pdfs, i.oc.ocorrencia)})
+    faltando = sorted({i.oc.ocorrencia for i in itens_ativos if not achar_pdf(pasta_pdfs, i.oc.ocorrencia)})
     if faltando and cfg.get("baixar_notas", {}).get("usar"):
         print(f"Baixando {len(faltando)} nota(s) pela macro baixar_nota...")
         from plu.baixar import baixar_faltantes
         baixar_faltantes(resolver(PASTA, cfg.get("pasta_macro_baixar_nota")), pasta_pdfs, faltando)
-    for it in itens:
+    for it in itens_ativos:
         escolha, _ = analisar(achar_pdf(pasta_pdfs, it.oc.ocorrencia), it.oc.fornecedor, it.oc.valor, conf)
         if escolha.status == "OK":
             it.plu, it.etapa = escolha.plu, "PLU"
         else:
             extra = (" | Opções: " + " / ".join(escolha.opcoes)) if escolha.opcoes else ""
             it.parar("PLU", "REVISAR", escolha.motivo + extra)
-    seguem = [i for i in itens if i.status == "PENDENTE"]
-    print(f"PLU: {len(seguem)} com PLU definido · {len(itens) - len(seguem)} para revisar")
+    seguem = [i for i in itens_ativos if i.status == "PENDENTE"]
+    print(f"PLU: {len(seguem)} com PLU definido · {len(itens_ativos) - len(seguem)} para revisar")
 
     from plu import sap
     s = sap.sessao() if seguem else None
@@ -231,6 +268,7 @@ def main() -> int:
                 it.parar("Criação da OM", "ERRO", f"{erro} (planilha: {arquivo.name}) - confira no SAP antes de rodar de novo")
             continue
         ligar_registros(lote, registros)
+        gravar_historico(historico_arq, [it for it in lote if it.om_nova])   # já, antes da IW32
         print(f"  {sum(1 for it in lote if it.om_nova)} OM(s) criada(s)")
 
     criadas = [i for i in seguem if i.om_nova]
@@ -259,11 +297,12 @@ def main() -> int:
             it.motivo = "OM criada; IW32 desligada no config"
 
     # Arquivos de saída ---------------------------------------------------------------------
-    if criadas:
+    faltam_iw32 = [i for i in criadas if i.status != "CONCLUIDO"]
+    if faltam_iw32:                       # só o que falta: dá para rodar a macro da teste om direto nele
         teste = salvar_teste_om(resolver(PASTA, cc.get("modelo_teste_om")),
-                                pasta_saida / f"teste_om_{carimbo}.xlsx", criadas,
+                                pasta_saida / f"teste_om_{carimbo}.xlsx", faltam_iw32,
                                 {"requisitante": iw["requisitante"], "prefixo_pedido": cc["prefixo_pedido"]})
-        print(f"\nTeste om: {teste}")
+        print(f"\nTeste om com {len(faltam_iw32)} OM(s) sem componente: {teste}")
     rel = salvar_relatorio(pasta_saida / f"relatorio_correcao_{carimbo}.xlsx", itens)
 
     contagem = {st: sum(1 for i in itens if i.status == st) for st in ("CONCLUIDO", "REVISAR", "ERRO", "PENDENTE")}

@@ -118,7 +118,7 @@ Saídas em `saida/`: a planilha de criação de cada lote, a teste om com as OMs
 python -m pytest
 ```
 
-São 55 testes, sem chamar nenhuma API paga: a IA é trocada por um provedor falso que acerta, responde fora do formato, devolve CNAE no lugar do código e fica fora do ar. Os PDFs de exemplo são gerados por `python exemplos/gerar_exemplos.py`.
+São 56 testes, sem chamar nenhuma API paga: a IA é trocada por um provedor falso que acerta, responde fora do formato, devolve CNAE no lugar do código e fica fora do ar. Os PDFs de exemplo são gerados por `python exemplos/gerar_exemplos.py`.
 
 ## Estrutura
 

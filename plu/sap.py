@@ -175,7 +175,11 @@ def ordens_dos_pedidos(s, pedidos: list[str]) -> dict[str, list[tuple[str, str]]
 # ------------------------------------------------------------------ criação em massa
 def criar_oms(s, transacao: str, caminho: str) -> list[Registro]:
     _transacao(s, transacao)
-    s.findById("wnd[0]/usr/ctxtP_ARQL").text = caminho
+    campo = s.findById("wnd[0]/usr/ctxtP_ARQL")
+    if len(caminho) > campo.MaxLength:
+        raise RuntimeError(f"Caminho da planilha com {len(caminho)} caracteres; o campo da {transacao} aceita "
+                           f"{campo.MaxLength}. Use uma pasta_saida mais curta no config")
+    campo.text = caminho
     s.findById("wnd[0]/tbar[1]/btn[8]").press()
     if _existe(s, "wnd[1]"):
         raise RuntimeError(f"{transacao} abriu uma janela inesperada: {s.findById('wnd[1]').Text}")
