@@ -12,6 +12,7 @@ from decimal import Decimal
 
 ALIQUOTAS_IR = (Decimal("1"), Decimal("1.5"))
 ALIQUOTAS_INSS = (Decimal("11"), Decimal("3.5"))
+PCC_TOTAL = Decimal("4.65")            # PIS 0,65 + COFINS 3 + CSLL 1
 
 
 def normalizar(texto: str | None) -> str:
@@ -54,6 +55,26 @@ class Tributacao:
             pcc=bool(pcc),
             inss=Decimal(inss.group(1).replace(",", ".")) if inss else None,
         )
+
+    def aceita(self, nota: "Tributacao", base: Decimal | None, minimo: Decimal = Decimal("10")) -> bool:
+        """O padrão do prestador (self) é compatível com o que veio na nota?
+
+        IR e PIS/COFINS/CSLL abaixo de R$ 10 não são retidos (dispensa do valor mínimo de recolhimento).
+        Então, numa nota pequena, o padrão pode ter IR/PCC e a nota vir sem eles.
+        """
+        if self == nota:
+            return True
+        if self.pessoa_fisica != nota.pessoa_fisica or self.inss != nota.inss or not base or base <= 0:
+            return False
+        if nota.ir is not None and nota.ir != self.ir:
+            return False
+        if nota.pcc and not self.pcc:
+            return False
+        if self.ir is not None and nota.ir is None and base * self.ir / 100 >= minimo:
+            return False
+        if self.pcc and not nota.pcc and base * PCC_TOTAL / 100 >= minimo:
+            return False
+        return True
 
     @classmethod
     def dos_valores(cls, base: Decimal, ir: Decimal, pcc: Decimal, inss: Decimal) -> "Tributacao":

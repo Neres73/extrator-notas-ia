@@ -95,11 +95,22 @@ def escolher(base: BaseFiscal, fornecedor, nota: DadosNota | None, preco: Decima
     if trib is not None:
         mesma_trib = [c for c in com_plu if c.tributacao == trib]
         if not mesma_trib:
+            # nota pequena: IR/PCC abaixo de R$ 10 não são retidos, então o padrão pode ter e a nota não
+            base_nota = nota.valor_servicos or preco
+            mesma_trib = [c for c in com_plu if c.tributacao.aceita(trib, base_nota)]
+            if mesma_trib:
+                trib_txt = ", ".join(sorted({c.impostos for c in mesma_trib}))
+                como_minimo = f" (padrão {trib_txt}: IR/PCC abaixo de R$ 10 não retidos)"
+            else:
+                como_minimo = ""
+        else:
+            como_minimo = ""
+        if not mesma_trib:
             liberadas = "; ".join(f"{c.descricao} = {c.impostos}" for c in com_plu)
             return Escolha("REVISAR", motivo=(f"Tributação da nota ({trib}) não bate com nenhum padrão liberado "
                                               f"para o prestador no {serv}: {liberadas}. Vai dar crítica no agendamento"))
         candidatas = mesma_trib
-        como = f"{serv} + tributação da nota ({trib})"
+        como = f"{serv} + tributação da nota ({trib}){como_minimo}"
     else:
         candidatas = com_plu
         como = f"{serv} (retenções não lidas no PDF)"

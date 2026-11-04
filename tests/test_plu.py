@@ -227,3 +227,35 @@ def test_empate_de_categoria_usa_a_categoria_padrao(base):
     prev = escolher(base, "2002", nota(ir="0", pcc="0", inss="0", texto="manutenção preventiva mensal"), D("1000"),
                     categorias_preferidas=[100])
     assert prev.status == "OK" and prev.plu == "900004"
+
+
+def test_nota_pequena_sem_pcc_aceita_padrao_pcc_e_inss():
+    # PCC de 4,65% sobre R$ 206,15 = R$ 9,59 < R$ 10: não é retido. Só o INSS 11% aparece na nota.
+    t = Tributacao.dos_valores(D("206.15"), D("0"), D("0"), D("22.68"))
+    assert t == Tributacao(inss=D("11"))
+    assert Tributacao(pcc=True, inss=D("11")).aceita(t, D("206.15"))
+    assert not Tributacao(pcc=True, inss=D("11")).aceita(t, D("1000"))      # aí o PCC teria que vir
+    assert not Tributacao(pcc=True).aceita(t, D("206.15"))                   # INSS não bate
+    assert Tributacao(ir=D("1.5"), pcc=True).aceita(Tributacao(), D("200"))  # IR 3,00 e PCC 9,30
+    e = escolher(base_com_pcc_inss(), "1001", nota(ir="0", pcc="0", inss="22.68", valor="206.15"), D("206.15"))
+    assert e.status == "OK" and e.plu == "900003" and "abaixo de R$ 10" in e.motivo
+
+
+def base_com_pcc_inss():
+    import tempfile
+    from openpyxl import Workbook
+    wb = Workbook()
+    p = wb.active
+    p.title = "Prestadores x REINF"
+    p.append(["Cod SAP", "Forn SAP", "Ctg. Serv.", "Desc. Ctg. Serv.", "Padrão Tributação", "Impostos"])
+    p.append([1001, "X", 20, "Manutenção preventiva com cessão de mão de obra", "F", "PCC e INSS 11%"])
+    p.append([1001, "X", 100, "Manutenção corretiva", "A", "Sem Imp. Fed."])
+    p.append([1001, "X", 101, "Manutenção preventiva sem cessão de mão de obra", "X", "PCC"])
+    plus = wb.create_sheet("PLUs")
+    plus.append(["|PLU|", "|Descrição|", "|SERV|", "|116|", "|Categoria|", "|Descrição Categoria|", "Conta Contábil ", "Descrição CC"])
+    plus.append([900001, "C", "SERV1401", DESC_1401, 100, "Manutenção corretiva", 400100, "x"])
+    plus.append([900003, "P", "SERV1401", DESC_1401, 20, "Prev com cessão", 400100, "x"])
+    plus.append([900004, "S", "SERV1401", DESC_1401, 101, "Prev sem cessão", 400100, "x"])
+    arq = tempfile.mktemp(suffix=".xlsx")
+    wb.save(arq)
+    return base_fiscal.carregar(arq)
