@@ -143,8 +143,7 @@ def ordens_dos_pedidos(s, pedidos: list[str]) -> dict[str, list[tuple[str, str]]
 
     _transacao(s, "ME2K")
     s.findById("wnd[0]/usr/ctxtEK_KOSTL-LOW").text = "*"
-    if _existe(s, "wnd[0]/usr/ctxtLISTU"):
-        s.findById("wnd[0]/usr/ctxtLISTU").text = ""          # saída em ALV
+    # "Abrangência da lista" (LISTU) fica com o valor padrão: vazio dá erro na ME2K
     s.findById("wnd[0]/usr/btn%_S_EBELN_%_APP_%-VALU_PUSH").press()
     s.findById("wnd[1]/tbar[0]/btn[16]").press()               # limpa a seleção anterior
     win32clipboard.OpenClipboard()
