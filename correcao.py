@@ -1,7 +1,7 @@
 """Processo completo das OMs de correção, partindo só da Base Geral.
 
 1. Base Geral -> filtra time, filas e valor máximo
-2. Baixa os PDFs que faltam (macro baixar_nota) e escolhe o PLU de cada nota (base fiscal)
+2. Lê código de serviço e impostos da nota na tela do NIX (ou do PDF) e escolhe o PLU (base fiscal)
    -> só segue quem tem PLU certo; o resto vai para o relatório com o motivo
 3. ME2K com os pedidos -> ordem original de cada pedido
 4. Monta a planilha de criação em massa ('REA ordem' + ordem, centro de custo, local, campos fixos)
@@ -197,25 +197,52 @@ def main() -> int:
             it.mensagens.append(f"Aviso: pedido {it.oc.pedido} aparece em {por_pedido[it.oc.pedido]} ocorrências")
     itens_ativos = [i for i in itens if i.status == "PENDENTE"]
 
-    # 2. PDFs e PLU -------------------------------------------------------------------------
+    # 2. Dados da nota e PLU ----------------------------------------------------------------
     conf = montar(cfg, PASTA)
-    faltando = sorted({i.oc.ocorrencia for i in itens_ativos if not achar_pdf(pasta_pdfs, i.oc.ocorrencia)})
-    if faltando and cfg.get("baixar_notas", {}).get("usar"):
-        print(f"Baixando {len(faltando)} nota(s) pela macro baixar_nota...")
-        from plu.baixar import baixar_faltantes
-        baixar_faltantes(resolver(PASTA, cfg.get("pasta_macro_baixar_nota")), pasta_pdfs, faltando)
-    for it in itens_ativos:
-        escolha, _ = analisar(achar_pdf(pasta_pdfs, it.oc.ocorrencia), it.oc.fornecedor, it.oc.valor, conf)
-        if escolha.status == "OK":
-            it.plu, it.etapa = escolha.plu, "PLU"
-        else:
-            extra = (" | Opções: " + " / ".join(escolha.opcoes)) if escolha.opcoes else ""
-            it.parar("PLU", "REVISAR", escolha.motivo + extra)
+    from plu import sap
+    s = None
+    leitura = cc.get("leitura", "sap")              # "sap" = tela do NIX (XML) · "pdf" = PDF baixado
+    if leitura == "sap" and itens_ativos:
+        from plu import nix
+        from plu.escolha import escolher
+        s = sap.sessao()
+        print(f"Lendo {len(itens_ativos)} nota(s) na tela do NIX...")
+        for n, it in enumerate(itens_ativos, start=1):
+            try:
+                nota = nix.ler_ocorrencia(s, it.oc.ocorrencia, pasta_saida / "diagnostico")
+            except Exception as erro:  # noqa: BLE001
+                it.parar("Leitura NIX", "ERRO", f"Erro ao abrir a ocorrência no NIX: {erro}")
+                continue
+            if nota is None:
+                it.parar("Leitura NIX", "REVISAR", "Ocorrência não encontrada no NIX (nota de material?)")
+                continue
+            it.mensagens += nota.avisos
+            escolha = escolher(conf.base, it.oc.fornecedor, nota, it.oc.valor,
+                               plu_preferido=conf.plu_preferido, contas_preferidas=conf.contas_preferidas)
+            if escolha.status == "OK":
+                it.plu, it.etapa = escolha.plu, "PLU"
+            else:
+                extra = (" | Opções: " + " / ".join(escolha.opcoes)) if escolha.opcoes else ""
+                it.parar("PLU", "REVISAR", escolha.motivo + extra)
+            print(f"  [{n}/{len(itens_ativos)}] {it.oc.ocorrencia} serviço {nota.item_lc116 or '-'} "
+                  f"IR {nota.ir} PCC {nota.pcc} INSS {nota.inss} -> {it.plu or it.status}")
+    else:
+        faltando = sorted({i.oc.ocorrencia for i in itens_ativos if not achar_pdf(pasta_pdfs, i.oc.ocorrencia)})
+        if faltando and cfg.get("baixar_notas", {}).get("usar"):
+            print(f"Baixando {len(faltando)} nota(s) pela macro baixar_nota...")
+            from plu.baixar import baixar_faltantes
+            baixar_faltantes(resolver(PASTA, cfg.get("pasta_macro_baixar_nota")), pasta_pdfs, faltando)
+        for it in itens_ativos:
+            escolha, _ = analisar(achar_pdf(pasta_pdfs, it.oc.ocorrencia), it.oc.fornecedor, it.oc.valor, conf)
+            if escolha.status == "OK":
+                it.plu, it.etapa = escolha.plu, "PLU"
+            else:
+                extra = (" | Opções: " + " / ".join(escolha.opcoes)) if escolha.opcoes else ""
+                it.parar("PLU", "REVISAR", escolha.motivo + extra)
     seguem = [i for i in itens_ativos if i.status == "PENDENTE"]
     print(f"PLU: {len(seguem)} com PLU definido · {len(itens_ativos) - len(seguem)} para revisar")
-
-    from plu import sap
-    s = sap.sessao() if seguem else None
+    if seguem and s is None:
+        s = sap.sessao()
 
     # 3. ME2K -------------------------------------------------------------------------------
     if seguem:

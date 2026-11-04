@@ -103,6 +103,7 @@ flowchart LR
     F --> G[Relatório final]
 ```
 
+- **Os dados da nota vêm da tela do NIX NFS-e Cockpit** (código de serviço e impostos do XML), porque o PDF gerado pelo SAP é uma imagem. Com `"leitura": "pdf"` volta a ler o PDF baixado.
 - **Só cria OM para nota com PLU definido.** O que a regra fiscal não decide fica no relatório com o motivo, antes de qualquer lançamento no SAP.
 - A planilha de criação é preenchida pelo próprio Excel a partir do modelo da equipe (as fórmulas da aba de envio são recalculadas); o modelo nunca é alterado e o lote respeita quantas linhas ele comporta.
 - O local de instalação vem da planilha de regiões (mais atualizada) e, na falta, da aba de locais do modelo.
@@ -118,7 +119,7 @@ Saídas em `saida/`: a planilha de criação de cada lote, a teste om com as OMs
 python -m pytest
 ```
 
-São 56 testes, sem chamar nenhuma API paga: a IA é trocada por um provedor falso que acerta, responde fora do formato, devolve CNAE no lugar do código e fica fora do ar. Os PDFs de exemplo são gerados por `python exemplos/gerar_exemplos.py`.
+São 58 testes, sem chamar nenhuma API paga: a IA é trocada por um provedor falso que acerta, responde fora do formato, devolve CNAE no lugar do código e fica fora do ar. Os PDFs de exemplo são gerados por `python exemplos/gerar_exemplos.py`.
 
 ## Estrutura
 
@@ -138,6 +139,7 @@ plu/
   baixar.py        integração com a macro baixar_nota
   base_geral.py    leitura e filtro da Base Geral de pendências
   input_om.py      planilha de criação em massa (modelo + regiões)
+  nix.py           leitura da nota na tela do NIX (código de serviço e impostos do XML)
   sap.py           ME2K, transação de criação e IW32 via SAP GUI Scripting
 exemplos/          base, planilha e notas fictícias + gerador
 tests/             pytest

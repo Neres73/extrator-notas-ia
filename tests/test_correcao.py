@@ -151,3 +151,40 @@ def test_historico_impede_criar_om_duas_vezes(tmp_path):
     gravar_historico(arq, [it])
     gravar_historico(arq, [])                                    # segunda gravação não repete o cabeçalho
     assert ler_historico(arq)["123"].startswith("OM 46502251 em ")
+
+
+# ---------------------------------------------------------------- tela do NIX (cockpit)
+def _tela_nix():
+    from plu.nix import Elemento
+    e = lambda x, y, t, tipo="GuiTextField": Elemento(f"id{x}_{y}", tipo, t, x, y, 21)  # noqa: E731
+    lbl = lambda x, y, t: e(x, y, t, "GuiLabel")  # noqa: E731
+    return [
+        lbl(40, 405, "Serviço LC:"), e(312, 405, "14.01"), e(390, 405, "LUBRIFICACAO, LIMPEZA, LUSTRACAO"),
+        lbl(66, 644, "Valor Total:"), e(272, 644, "440,00"), e(650, 644, "0,00"),
+        lbl(66, 678, "Valor Líquido:"), e(272, 678, "440,00"), e(650, 678, "0,00"),
+        lbl(66, 780, "ISSQN:"), e(272, 780, "13,20"), e(650, 780, "0,00"),
+        lbl(66, 814, "PIS:"), e(272, 814, "6,60"), e(650, 814, "0,00"),
+        lbl(66, 848, "COFINS:"), e(272, 848, "30,40"), e(650, 848, "0,00"),
+        lbl(66, 882, "CSLL:"), e(272, 882, "4,40"), e(650, 882, "0,00"),
+        lbl(66, 916, "IRRF:"), e(272, 916, "6,60"), e(650, 916, "0,00"),
+        lbl(66, 950, "INSS:"), e(272, 950, "0,00"), e(650, 950, "0,00"),
+    ]
+
+
+def test_le_codigo_e_impostos_da_tela_do_nix():
+    from plu.nix import ler_campos, nota_da_tela
+    from plu.tributacao import Tributacao
+    nota = nota_da_tela("105217996", ler_campos(_tela_nix()))
+    assert nota.item_lc116 == "14.01" and nota.serv == "SERV1401"
+    assert nota.valor_servicos == D("440.00")
+    assert (nota.ir, nota.pcc, nota.inss) == (D("6.60"), D("41.40"), D("0.00"))
+    assert nota.tributacao() == Tributacao(ir=D("1.5"), pcc=True)
+
+
+def test_nota_sem_retencao_na_tela_do_nix():
+    from plu.nix import Elemento, ler_campos, nota_da_tela
+    from plu.tributacao import Tributacao
+    els = [Elemento(x.id, x.tipo, "0,00" if x.x == 272 and x.y >= 814 else x.texto, x.x, x.y, x.altura)
+           for x in _tela_nix()]
+    nota = nota_da_tela("1", ler_campos(els))
+    assert nota.tributacao() == Tributacao()

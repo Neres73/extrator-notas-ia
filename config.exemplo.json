@@ -32,6 +32,7 @@
       "NF Serviço x Pedido Material",
       "Valor Divergente"
     ],
+    "leitura": "sap",
     "modelo_input": "C:/Users/SEU_USUARIO/Desktop/INPUT_ORDEM_EM_MASSA.xlsx",
     "modelo_teste_om": "C:/Users/SEU_USUARIO/Desktop/teste_om.xlsm",
     "planilha_regioes": "C:/Users/SEU_USUARIO/Desktop/Regioes.xlsb",
