@@ -37,7 +37,6 @@
     "planilha_regioes": "C:/Users/SEU_USUARIO/Desktop/Regioes.xlsb",
     "transacao_criacao": "TRANSACAO_DE_CRIACAO",
     "prefixo_texto_breve": "REA ordem",
-    "prefixo_pedido": "PEDIDO AJUSTE",
     "confirmar_antes_de_criar": true,
     "campos_fixos": {
       "Tipo de nota": "XX",

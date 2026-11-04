@@ -90,7 +90,7 @@ def salvar_teste_om(modelo: Path | None, destino: Path, itens: list[Item], cfg: 
     for i, it in enumerate(itens, start=2):
         valores = [int(it.om_nova), int(it.oc.fornecedor) if it.oc.fornecedor.isdigit() else it.oc.fornecedor,
                    int(it.plu) if it.plu.isdigit() else it.plu, 1, float(it.oc.valor), cfg["requisitante"],
-                   f"{cfg['prefixo_pedido']}{it.oc.pedido}", it.oc.ocorrencia,
+                   f"{cfg['prefixo_texto_breve']}{it.ordem_original}", it.oc.ocorrencia,
                    "OK" if it.status == "CONCLUIDO" else it.motivo]
         for col, v in enumerate(valores, start=1):
             ws.cell(row=i, column=col, value=v)
@@ -303,7 +303,7 @@ def main() -> int:
     if criadas:                           # teste om do zero: só as OMs criadas nesta execução
         teste = salvar_teste_om(resolver(PASTA, cc.get("modelo_teste_om")),
                                 pasta_saida / f"teste_om_{carimbo}.xlsx", criadas,
-                                {"requisitante": iw["requisitante"], "prefixo_pedido": cc["prefixo_pedido"]})
+                                {"requisitante": iw["requisitante"], "prefixo_texto_breve": cc["prefixo_texto_breve"]})
         faltam = sum(1 for i in criadas if i.status != "CONCLUIDO")
         print(f"\nTeste om: {len(criadas)} OM(s), {faltam} sem componente na IW32 (coluna Status IW32): {teste}")
     rel = salvar_relatorio(pasta_saida / f"relatorio_correcao_{carimbo}.xlsx", itens)
