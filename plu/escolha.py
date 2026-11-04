@@ -62,8 +62,10 @@ def _escolher_plu(candidatos: list[Plu], serv: str, cat: int, plu_preferido: dic
 
 def escolher(base: BaseFiscal, fornecedor, nota: DadosNota | None, preco: Decimal | None,
              plu_preferido: dict[str, str] | None = None,
-             contas_preferidas: list[str] | None = None) -> Escolha:
+             contas_preferidas: list[str] | None = None,
+             categorias_preferidas: list[int] | None = None) -> Escolha:
     plu_preferido = plu_preferido or {}
+    categorias_preferidas = [int(c) for c in (categorias_preferidas or [])]
     contas_preferidas = [str(c) for c in (contas_preferidas or [])]
 
     cats = base.categorias(fornecedor)
@@ -104,6 +106,14 @@ def escolher(base: BaseFiscal, fornecedor, nota: DadosNota | None, preco: Decima
 
     if len(candidatas) > 1:
         candidatas = _desempatar_por_texto(candidatas, nota.texto)
+    if len(candidatas) > 1:
+        # empate que nem o texto resolve: categoria padrão da equipe (ex.: 100 Manutenção corretiva)
+        for preferida in categorias_preferidas:
+            da_pref = [c for c in candidatas if c.categoria == preferida]
+            if da_pref:
+                como += f" (empate entre {len(candidatas)} categorias: usada a padrão {preferida})"
+                candidatas = da_pref
+                break
     if len(candidatas) > 1:
         opcoes = [f"{c.categoria} {c.descricao} ({c.impostos})" for c in candidatas]
         return Escolha("REVISAR", motivo=f"{como}: mais de uma categoria possível", opcoes=opcoes)

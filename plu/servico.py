@@ -24,6 +24,7 @@ class Configuracao:
     codigos_municipais: dict[str, str] = field(default_factory=dict)
     plu_preferido: dict[str, str] = field(default_factory=dict)
     contas_preferidas: list[str] = field(default_factory=list)
+    categorias_preferidas: list[int] = field(default_factory=list)
 
 
 def carregar_json(caminho: Path) -> dict:
@@ -52,6 +53,7 @@ def montar(cfg: dict, pasta: Path) -> Configuracao:
         codigos_municipais={re.sub(r"\D", "", k).lstrip("0"): v for k, v in cfg.get("codigos_municipais", {}).items()},
         plu_preferido=cfg.get("plu_preferido", {}),
         contas_preferidas=[str(c) for c in cfg.get("contas_preferidas", [])],
+        categorias_preferidas=[int(c) for c in cfg.get("categorias_preferidas", [])],
     )
 
 
@@ -67,5 +69,6 @@ def analisar(pdf: Path | None, fornecedor, preco: Decimal | None, conf: Configur
         if not nota.item_lc116 and nota.codigo_municipal:
             nota.item_lc116 = conf.codigos_municipais.get(nota.codigo_municipal.lstrip("0"))
     escolha = escolher(conf.base, fornecedor, nota, preco,
-                       plu_preferido=conf.plu_preferido, contas_preferidas=conf.contas_preferidas)
+                       plu_preferido=conf.plu_preferido, contas_preferidas=conf.contas_preferidas,
+                       categorias_preferidas=conf.categorias_preferidas)
     return escolha, nota

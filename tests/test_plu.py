@@ -214,3 +214,16 @@ def test_fornecedor_fora_da_base_lista_os_plus_do_servico(base):
     e = escolher(base, 9999, nota(), None)
     assert e.status == "REVISAR" and "padrão de tributação" in e.motivo
     assert len(e.opcoes) == 4 and all("SERV1401" in o for o in e.opcoes)
+
+
+def test_empate_de_categoria_usa_a_categoria_padrao(base):
+    # 2002 tem corretiva (100) e preventiva sem cessão (101), as duas sem imposto
+    sem_padrao = escolher(base, "2002", nota(ir="0", pcc="0", inss="0"), D("1000"))
+    assert sem_padrao.status == "REVISAR"
+    com_padrao = escolher(base, "2002", nota(ir="0", pcc="0", inss="0"), D("1000"),
+                          contas_preferidas=["400100"], categorias_preferidas=[100])
+    assert com_padrao.status == "OK" and com_padrao.plu == "900001" and "padrão 100" in com_padrao.motivo
+    # o texto da nota continua mandando: "preventiva" vence a categoria padrão
+    prev = escolher(base, "2002", nota(ir="0", pcc="0", inss="0", texto="manutenção preventiva mensal"), D("1000"),
+                    categorias_preferidas=[100])
+    assert prev.status == "OK" and prev.plu == "900004"

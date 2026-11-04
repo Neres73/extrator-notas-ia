@@ -44,6 +44,7 @@ class Item:
     motivo: str = ""
     plu: str | None = None
     ordem_original: str | None = None
+    texto_breve: str | None = None      # "REA ordem" + ordem, ou "REA pedido" + pedido
     om_nova: str | None = None
     nota_nova: str | None = None
     mensagens: list[str] = field(default_factory=list)
@@ -90,7 +91,7 @@ def salvar_teste_om(modelo: Path | None, destino: Path, itens: list[Item], cfg: 
     for i, it in enumerate(itens, start=2):
         valores = [int(it.om_nova), int(it.oc.fornecedor) if it.oc.fornecedor.isdigit() else it.oc.fornecedor,
                    int(it.plu) if it.plu.isdigit() else it.plu, 1, float(it.oc.valor), cfg["requisitante"],
-                   f"{cfg['prefixo_texto_breve']}{it.ordem_original}", it.oc.ocorrencia,
+                   it.texto_breve, it.oc.ocorrencia,
                    "OK" if it.status == "CONCLUIDO" else it.motivo]
         for col, v in enumerate(valores, start=1):
             ws.cell(row=i, column=col, value=v)
@@ -218,7 +219,8 @@ def main() -> int:
                 continue
             it.mensagens += nota.avisos
             escolha = escolher(conf.base, it.oc.fornecedor, nota, it.oc.valor,
-                               plu_preferido=conf.plu_preferido, contas_preferidas=conf.contas_preferidas)
+                               plu_preferido=conf.plu_preferido, contas_preferidas=conf.contas_preferidas,
+                               categorias_preferidas=conf.categorias_preferidas)
             if escolha.status == "OK":
                 it.plu, it.etapa = escolha.plu, "PLU"
             else:
@@ -251,17 +253,20 @@ def main() -> int:
             achadas = ordens.get(it.oc.pedido, [])
             distintas = sorted({o for o, _ in achadas})
             if not distintas:
-                it.parar("ME2K", "REVISAR", "Pedido sem ordem (AUFNR) na ME2K")
+                it.texto_breve = f"{cc.get('prefixo_texto_breve_pedido', 'REA pedido')}{it.oc.pedido}"
+                it.mensagens.append("Pedido sem ordem na ME2K: texto com o número do pedido")
             elif len(distintas) > 1:
                 it.parar("ME2K", "REVISAR", f"Pedido com mais de uma ordem na ME2K: {', '.join(distintas)}")
             else:
                 it.ordem_original = distintas[0]
+                it.texto_breve = f"{cc['prefixo_texto_breve']}{it.ordem_original}"
                 centros = {c for o, c in achadas if c}
                 if centros and it.oc.centro.lstrip("0") not in centros:
                     it.mensagens.append(f"Aviso: centro da Base ({it.oc.centro}) diferente do centro de custo "
                                         f"do pedido na ME2K ({', '.join(sorted(centros))})")
         seguem = [i for i in seguem if i.status == "PENDENTE"]
-        print(f"ME2K: {len(seguem)} com ordem original")
+        print(f"ME2K: {sum(1 for i in seguem if i.ordem_original)} com ordem original · "
+              f"{sum(1 for i in seguem if not i.ordem_original)} só com o pedido")
 
     # 4 e 5. Criação das OMs ----------------------------------------------------------------
     modelo = resolver(PASTA, cc["modelo_input"])
@@ -282,7 +287,7 @@ def main() -> int:
         raise ValueError("A aba Input do modelo não tem linhas com fórmula")
 
     for n, lote in enumerate(lotes(seguem, capacidade), start=1):
-        linhas = [input_om.montar_linha(f"{cc['prefixo_texto_breve']}{it.ordem_original}", it.oc.centro,
+        linhas = [input_om.montar_linha(it.texto_breve, it.oc.centro,
                                         locais[it.oc.centro], cc["campos_fixos"]) for it in lote]
         arquivo = input_om.preencher(modelo, pasta_saida / f"INPUT_OM_{carimbo}_lote{n}.xlsx", linhas)
         print(f"\nLote {n}: {len(lote)} linha(s) em {arquivo.name}")

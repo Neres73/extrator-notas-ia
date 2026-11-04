@@ -16,6 +16,9 @@
   "contas_preferidas": [
     "400100"
   ],
+  "categorias_preferidas": [
+    100
+  ],
   "plu_preferido": {},
   "codigos_municipais": {
     "07498": "14.01"
@@ -38,6 +41,7 @@
     "planilha_regioes": "C:/Users/SEU_USUARIO/Desktop/Regioes.xlsb",
     "transacao_criacao": "TRANSACAO_DE_CRIACAO",
     "prefixo_texto_breve": "REA ordem",
+    "prefixo_texto_breve_pedido": "REA pedido",
     "confirmar_antes_de_criar": true,
     "campos_fixos": {
       "Tipo de nota": "XX",
