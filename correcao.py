@@ -75,6 +75,9 @@ def salvar_teste_om(modelo: Path | None, destino: Path, itens: list[Item], cfg: 
     if modelo and modelo.is_file():
         wb = load_workbook(modelo, keep_vba=modelo.suffix.lower() == ".xlsm")
         ws = wb.worksheets[0]
+        for linha in ws.iter_rows(min_row=2):                # começa do zero: só o cabeçalho fica
+            for cel in linha:
+                cel.value = None
         if ws.max_row > 1:
             ws.delete_rows(2, ws.max_row)
         destino = destino.with_suffix(modelo.suffix)
@@ -297,12 +300,12 @@ def main() -> int:
             it.motivo = "OM criada; IW32 desligada no config"
 
     # Arquivos de saída ---------------------------------------------------------------------
-    faltam_iw32 = [i for i in criadas if i.status != "CONCLUIDO"]
-    if faltam_iw32:                       # só o que falta: dá para rodar a macro da teste om direto nele
+    if criadas:                           # teste om do zero: só as OMs criadas nesta execução
         teste = salvar_teste_om(resolver(PASTA, cc.get("modelo_teste_om")),
-                                pasta_saida / f"teste_om_{carimbo}.xlsx", faltam_iw32,
+                                pasta_saida / f"teste_om_{carimbo}.xlsx", criadas,
                                 {"requisitante": iw["requisitante"], "prefixo_pedido": cc["prefixo_pedido"]})
-        print(f"\nTeste om com {len(faltam_iw32)} OM(s) sem componente: {teste}")
+        faltam = sum(1 for i in criadas if i.status != "CONCLUIDO")
+        print(f"\nTeste om: {len(criadas)} OM(s), {faltam} sem componente na IW32 (coluna Status IW32): {teste}")
     rel = salvar_relatorio(pasta_saida / f"relatorio_correcao_{carimbo}.xlsx", itens)
 
     contagem = {st: sum(1 for i in itens if i.status == st) for st in ("CONCLUIDO", "REVISAR", "ERRO", "PENDENTE")}
