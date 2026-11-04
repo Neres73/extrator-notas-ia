@@ -1,4 +1,4 @@
-"""Planilha de criação de OMs em massa (a que é carregada na transação de criação, ex.: ZTPM0032).
+"""Planilha de criação de OMs em massa (a que é carregada na transação de criação).
 
 O modelo tem duas abas que importam:
 - 'Criar OM Massa': onde as linhas são preenchidas (é o que a equipe preenche à mão)
