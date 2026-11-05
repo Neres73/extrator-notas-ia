@@ -143,8 +143,25 @@ def gravar_historico(arquivo: Path, itens: list[Item]) -> None:
                         f"{datetime.now():%d/%m/%Y %H:%M}"])
 
 
+def _descartar_teclas() -> None:
+    """Joga fora o que foi digitado enquanto o programa trabalhava (um Enter solto não pode responder)."""
+    try:
+        import msvcrt
+        while msvcrt.kbhit():
+            msvcrt.getwch()
+    except Exception:  # noqa: BLE001 - fora do Windows, ou console sem suporte (ex.: PyCharm)
+        pass
+
+
 def confirmar(pergunta: str) -> bool:
-    return input(f"{pergunta} [s/N] ").strip().lower() in ("s", "sim")
+    _descartar_teclas()
+    while True:
+        resposta = input(f"{pergunta} Digite s ou n e Enter: ").strip().lower()
+        if resposta in ("s", "sim"):
+            return True
+        if resposta in ("n", "nao", "não"):
+            return False
+        print("  Resposta vazia ou inválida: digite s (criar) ou n (não criar).")
 
 
 def main() -> int:
@@ -270,6 +287,8 @@ def main() -> int:
 
     # 4 e 5. Criação das OMs ----------------------------------------------------------------
     modelo = resolver(PASTA, cc["modelo_input"])
+    if seguem:
+        print("Lendo o modelo da planilha de criação e a planilha de regiões...", flush=True)
     locais, capacidade = input_om.ler_modelo(modelo)
     situacao: dict[str, str] = {}
     regioes = resolver(PASTA, cc.get("planilha_regioes"))
@@ -289,13 +308,17 @@ def main() -> int:
     for n, lote in enumerate(lotes(seguem, capacidade), start=1):
         linhas = [input_om.montar_linha(it.texto_breve, it.oc.centro,
                                         locais[it.oc.centro], cc["campos_fixos"]) for it in lote]
+        print(f"\nLote {n}: montando a planilha de criação no Excel ({len(lote)} linha(s))... "
+              f"pode levar 1 a 2 minutos, não aperte nada", flush=True)
+        t0 = time.perf_counter()
         arquivo = input_om.preencher(modelo, pasta_saida / f"INPUT_OM_{carimbo}_lote{n}.xlsx", linhas)
-        print(f"\nLote {n}: {len(lote)} linha(s) em {arquivo.name}")
+        print(f"Lote {n}: planilha pronta em {time.perf_counter() - t0:.0f}s: {arquivo}")
         if cc.get("confirmar_antes_de_criar", True) and not confirmar(
                 f"Criar {len(lote)} OM(s) na {cc['transacao_criacao']} agora?"):
             for it in lote:
                 it.parar("Criação da OM", "REVISAR", f"Criação não confirmada (planilha pronta: {arquivo.name})")
             continue
+        print(f"Criando as OMs na {cc['transacao_criacao']}...", flush=True)
         try:
             registros = sap.criar_oms(s, cc["transacao_criacao"], str(arquivo))
         except Exception as erro:  # noqa: BLE001

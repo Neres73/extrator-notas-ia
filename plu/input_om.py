@@ -91,8 +91,11 @@ def preencher(modelo: str | Path, destino: str | Path, linhas: list[dict]) -> Pa
     xl.Visible = False
     xl.DisplayAlerts = False
     xl.AskToUpdateLinks = False
+    xl.ScreenUpdating = False
+    xl.EnableEvents = False
     wb = xl.Workbooks.Open(str(destino), UpdateLinks=0)
     try:
+        xl.Calculation = -4135                                              # manual enquanto preenche
         ws = wb.Worksheets(ABA_DADOS)
         ultima_col = ws.Cells(1, ws.Columns.Count).End(-4159).Column        # xlToLeft
         colunas = {chave(ws.Cells(1, c).Value): c for c in range(1, ultima_col + 1) if ws.Cells(1, c).Value}
@@ -110,7 +113,7 @@ def preencher(modelo: str | Path, destino: str | Path, linhas: list[dict]) -> Pa
                 if isinstance(valor, str):
                     cel.NumberFormat = "@"                                    # mantém zeros à esquerda
                 cel.Value = valor
-        xl.CalculateFull()
+        xl.Calculate()                                                       # a aba Input puxa os valores
         wb.Save()
     finally:
         wb.Close(SaveChanges=False)
