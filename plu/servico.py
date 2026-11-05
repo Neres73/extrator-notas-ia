@@ -15,6 +15,7 @@ from .base_fiscal import BaseFiscal, carregar
 from .escolha import Escolha, escolher
 from .leitor_ia import Provedor, completar_com_ia, criar_provedor
 from .leitor_pdf import DadosNota, ler_nota
+from .tributacao import normalizar
 
 
 @dataclass
@@ -49,12 +50,19 @@ def montar(cfg: dict, pasta: Path) -> Configuracao:
     ia = cfg.get("ia", {})
     base = carregar(base_arq)
     bloqueadas = {str(c) for c in cfg.get("contas_bloqueadas", [])}
-    if bloqueadas:                      # PLUs dessas contas nunca são usados
-        base.plus = [p for p in base.plus if p.conta not in bloqueadas]
+    textos = [normalizar(x) for x in cfg.get("textos_bloqueados", [])]
+
+    def bloqueado(p) -> bool:
+        texto = normalizar(f"{p.descricao} {p.descricao_conta}")
+        return p.conta in bloqueadas or any(x in texto for x in textos)
+
+    if bloqueadas or textos:            # PLUs dessas contas (ou com esses textos) nunca são usados
+        base.plus = [p for p in base.plus if not bloqueado(p)]
         fixos = {p.plu for p in base.plus}
         for chave, plu in cfg.get("plu_preferido", {}).items():
             if str(plu) not in fixos:
-                raise ValueError(f"plu_preferido {chave} = {plu}: PLU não está na base fiscal ou é de conta bloqueada")
+                raise ValueError(f"plu_preferido {chave} = {plu}: PLU não está na base fiscal ou está bloqueado "
+                                 "(conta ou texto bloqueado no config)")
     return Configuracao(
         base=base,
         provedor_ia=criar_provedor(ia.get("provedor"), ia.get("modelo")),

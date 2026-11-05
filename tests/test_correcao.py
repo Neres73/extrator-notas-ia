@@ -198,6 +198,14 @@ def test_conta_bloqueada_some_da_escolha(tmp_path):
     conf = montar(cfg, tmp_path)
     assert all(p.conta != "400200" for p in conf.base.plus)
     import pytest
-    with pytest.raises(ValueError, match="conta bloqueada"):
+    with pytest.raises(ValueError, match="bloqueado"):
         montar({**cfg, "plu_preferido": {"SERV1401|100": "900102"}}, tmp_path)
     json.dumps(cfg)
+
+
+def test_texto_bloqueado_tira_plu_de_contrato(tmp_path):
+    from plu.servico import montar
+    base = RAIZ / "exemplos" / "base_fiscal_exemplo.xlsx"
+    conf = montar({"base_fiscal": str(base), "textos_bloqueados": ["hardware"]}, tmp_path)
+    assert "900102" not in {p.plu for p in conf.base.plus}          # conta "Manutenção - hardware"
+    assert "900101" in {p.plu for p in conf.base.plus}
