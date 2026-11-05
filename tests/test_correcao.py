@@ -209,3 +209,9 @@ def test_texto_bloqueado_tira_plu_de_contrato(tmp_path):
     conf = montar({"base_fiscal": str(base), "textos_bloqueados": ["hardware"]}, tmp_path)
     assert "900102" not in {p.plu for p in conf.base.plus}          # conta "Manutenção - hardware"
     assert "900101" in {p.plu for p in conf.base.plus}
+
+
+def test_servico_com_um_digito_no_nix_vira_dois():
+    from plu.nix import nota_da_tela
+    assert nota_da_tela("1", {"servico": "7.02"}).serv == "SERV0702"
+    assert nota_da_tela("1", {"servico": "14.01"}).serv == "SERV1401"

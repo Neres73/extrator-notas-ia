@@ -101,7 +101,11 @@ def ler_campos(els: list[Elemento]) -> dict[str, str | None]:
 
 def nota_da_tela(ocorrencia: str, campos: dict) -> DadosNota:
     nota = DadosNota(arquivo=f"NIX {ocorrencia}", texto=campos.get("servico_desc") or "")
-    nota.item_lc116 = campos.get("servico")
+    servico = campos.get("servico")
+    if servico:                                           # o NIX mostra "7.02": a base usa "07.02" (SERV0702)
+        grupo, item = servico.split(".")
+        servico = f"{int(grupo):02d}.{item}"
+    nota.item_lc116 = servico
     nota.origem_codigo = "tela do NIX (XML)"
     nota.valor_servicos = _num(campos.get("valor") or "")
     nota.ir = _num(campos.get("ir") or "")
